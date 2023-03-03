@@ -34,7 +34,7 @@ open class HIDDeviceMonitor {
             deviceMatches.append(match)
         }
         IOHIDManagerSetDeviceMatchingMultiple(managerRef, deviceMatches as CFArray)
-        IOHIDManagerScheduleWithRunLoop(managerRef, CFRunLoopGetCurrent(), CFRunLoopMode.defaultMode.rawValue);
+        IOHIDManagerScheduleWithRunLoop(managerRef, CFRunLoopGetCurrent(), CFRunLoopMode.commonModes.rawValue);
         IOHIDManagerOpen(managerRef, IOOptionBits(kIOHIDOptionsTypeNone));
         
         let matchingCallback:IOHIDDeviceCallback = { inContext, inResult, inSender, inIOHIDDeviceRef in
