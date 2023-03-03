@@ -36,20 +36,25 @@ public struct HIDMonitorData {
 }
 
 public struct HIDDevice {
-    public let id:String
+    public let id:Int
+    public let idStringValue:String
+    
     public let vendorId:Int
     public let productId:Int
     public let reportSize:Int
     public let device:IOHIDDevice
     public let name:String
+    public let interfaceId:Int
     
     public init(device:IOHIDDevice) {
         self.device = device
         
-        self.id = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? String ?? ""
-        self.name = IOHIDDeviceGetProperty(device, kIOHIDProductKey as CFString) as? String ?? ""
-        self.vendorId = IOHIDDeviceGetProperty(self.device, kIOHIDVendorIDKey as CFString) as? Int ?? 0
-        self.productId = IOHIDDeviceGetProperty(self.device, kIOHIDProductIDKey as CFString) as? Int ?? 0
-        self.reportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? 0
+        self.id = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? Int ?? -1
+        self.idStringValue = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? String ?? ""
+        self.name = IOHIDDeviceGetProperty(self.device, kIOHIDProductKey as CFString) as? String ?? ""
+        self.vendorId = IOHIDDeviceGetProperty(self.device, kIOHIDVendorIDKey as CFString) as? Int ?? -1
+        self.productId = IOHIDDeviceGetProperty(self.device, kIOHIDProductIDKey as CFString) as? Int ?? -1
+        self.reportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? -1
+        self.interfaceId = IOHIDDeviceGetProperty(self.device, kUSBInterfaceNumber as CFString) as? Int ?? -1
     }
 }
