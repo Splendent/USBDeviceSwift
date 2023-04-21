@@ -10,10 +10,15 @@ import Cocoa
 import Foundation
 import IOKit.hid
 
+public protocol HIDDeviceMonitorDelegate {
+    func deviceDataReceived(data: Data, dataPointer:UnsafeMutablePointer<UInt8>, device: IOHIDDevice)
+}
 
 open class HIDDeviceMonitor {
     public let vp:[HIDMonitorData]
     public let reportSize:Int
+    
+    public var delegate: HIDDeviceMonitorDelegate? = nil
     
     public init(_ vp:[HIDMonitorData], reportSize:Int) {
         self.vp = vp
@@ -55,20 +60,32 @@ open class HIDDeviceMonitor {
     
     open func read(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, type: IOHIDReportType, reportId: UInt32, report: UnsafeMutablePointer<UInt8>, reportLength: CFIndex, device: IOHIDDevice) {
         let data = Data(bytes: UnsafePointer<UInt8>(report), count: reportLength)
+        self.delegate?.deviceDataReceived(data: data, dataPointer: report, device: device)
         NotificationCenter.default.post(name: .HIDDeviceDataReceived, object: ["data": data, "dataPtr" : report, "ioHIDDevice": device])
     }
     
     open func rawDeviceAdded(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, inIOHIDDeviceRef: IOHIDDevice!) {
         // It would be better to look up the report size and create a chunk of memory of that size
         let report = UnsafeMutablePointer<UInt8>.allocate(capacity: reportSize)
-        let inputCallback : IOHIDReportCallback = { inContext, inResult, inSender, type, reportId, report, reportLength in
+        let inputCallback : IOHIDReportWithTimeStampCallback = { inContext, inResult, inSender, type, reportId, report, reportLength, timeStamp in
+            /** @typedef IOHIDReportCallback
+                @discussion Type and arguments of callout C function that is used when a HID report completion routine is called.
+                @param context void * pointer to your data, often a pointer to an object.
+                @param result Completion result of desired operation.
+                @param sender Interface instance sending the completion routine.
+                @param type The type of the report that was completed.
+                @param reportID The ID of the report that was completed.
+                @param report Pointer to the buffer containing the contents of the report.
+                @param reportLength Size of the buffer received upon completion.
+                @param timeStamp The time at which the report arrived.
+            */
             let this:HIDDeviceMonitor = unsafeBitCast(inContext, to: HIDDeviceMonitor.self)
             let deviceRef:IOHIDDevice = unsafeBitCast(inSender, to: IOHIDDevice.self)
             this.read(inResult, inSender: inSender!, type: type, reportId: reportId, report: report, reportLength: reportLength, device: deviceRef)
         }
         
         //Hook up inputcallback
-        IOHIDDeviceRegisterInputReportCallback(inIOHIDDeviceRef!, report, reportSize, inputCallback, unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
+        IOHIDDeviceRegisterInputReportWithTimeStampCallback(inIOHIDDeviceRef!, report, reportSize, inputCallback, unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
         
         let device = HIDDevice(device:inIOHIDDeviceRef)
         NotificationCenter.default.post(name: .HIDDeviceConnected, object: ["device": device])
