@@ -37,7 +37,7 @@ public struct HIDMonitorData {
 
 public struct HIDDevice {
     public let id:Int
-    public let idStringValue:String
+    public let idStringValue:String?
     
     public let vendorId:Int
     public let productId:Int
@@ -45,16 +45,22 @@ public struct HIDDevice {
     public let device:IOHIDDevice
     public let name:String
     public let interfaceId:Int
+    public let version:Int?
+    public let serialNumber: String?
+    public let reportInterval: Int?
     
     public init(device:IOHIDDevice) {
         self.device = device
         
         self.id = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? Int ?? -1
-        self.idStringValue = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? String ?? ""
+        self.idStringValue = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? String
         self.name = IOHIDDeviceGetProperty(self.device, kIOHIDProductKey as CFString) as? String ?? ""
         self.vendorId = IOHIDDeviceGetProperty(self.device, kIOHIDVendorIDKey as CFString) as? Int ?? -1
         self.productId = IOHIDDeviceGetProperty(self.device, kIOHIDProductIDKey as CFString) as? Int ?? -1
         self.reportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? -1
+        self.version = IOHIDDeviceGetProperty(self.device, kIOHIDVersionNumberKey as CFString) as? Int
+        self.serialNumber = IOHIDDeviceGetProperty(self.device, kIOHIDSerialNumberKey as CFString) as? String
+        self.reportInterval = IOHIDDeviceGetProperty(self.device, kIOHIDReportIntervalKey as CFString) as? Int
         
         /**
          Discussion: after macOS 13.3, kUUSBInterfaceNumber might not available if treated as HIDDevice
