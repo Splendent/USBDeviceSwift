@@ -34,18 +34,44 @@ public struct HIDMonitorData {
         self.usage = usage
     }
 }
+public struct HIDBCDVersion {
+    public let majorVersion: Int
+    public let minorVersion: Int
+    public let subMinorVersion: Int
+    
+    public let rawValue: String
+    public init?(bcdVersionString: String) {
+        let length = bcdVersionString.count
+        if length < 3 {
+            return nil
+        }
+        let indexMajor = bcdVersionString.index(bcdVersionString.startIndex, offsetBy: 0)
+        let indexMinor = bcdVersionString.index(bcdVersionString.endIndex, offsetBy: -2)
+        let indexSubMinor = bcdVersionString.index(bcdVersionString.endIndex, offsetBy: -1)
+        
+        guard let major = Int(String(bcdVersionString[..<indexMinor]))
+                ,let minor = Int(String(bcdVersionString[indexMinor]))
+                ,let subMinor = Int(String(bcdVersionString[indexSubMinor]))
+        else {
+            return nil
+        }
+        self.majorVersion = major
+        self.minorVersion = minor
+        self.subMinorVersion = subMinor
+        self.rawValue = bcdVersionString
+    }
+}
 
 public struct HIDDevice {
     public let id:Int
-    public let idStringValue:String?
-    
     public let vendorId:Int
     public let productId:Int
     public let reportSize:Int
     public let device:IOHIDDevice
     public let name:String
     public let interfaceId:Int
-    public let version:Int?
+    public let versionValue: Int?
+    public let version: HIDBCDVersion?
     public let serialNumber: String?
     public let reportInterval: Int?
     
@@ -53,12 +79,12 @@ public struct HIDDevice {
         self.device = device
         
         self.id = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? Int ?? -1
-        self.idStringValue = IOHIDDeviceGetProperty(self.device, kIOHIDLocationIDKey as CFString) as? String
         self.name = IOHIDDeviceGetProperty(self.device, kIOHIDProductKey as CFString) as? String ?? ""
         self.vendorId = IOHIDDeviceGetProperty(self.device, kIOHIDVendorIDKey as CFString) as? Int ?? -1
         self.productId = IOHIDDeviceGetProperty(self.device, kIOHIDProductIDKey as CFString) as? Int ?? -1
         self.reportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? -1
-        self.version = IOHIDDeviceGetProperty(self.device, kIOHIDVersionNumberKey as CFString) as? Int
+        self.versionValue = IOHIDDeviceGetProperty(self.device, kIOHIDVersionNumberKey as CFString) as? Int //bcdDevice, actually
+        self.version = HIDBCDVersion(bcdVersionString: String(format: "%x", self.versionValue ?? 0))
         self.serialNumber = IOHIDDeviceGetProperty(self.device, kIOHIDSerialNumberKey as CFString) as? String
         self.reportInterval = IOHIDDeviceGetProperty(self.device, kIOHIDReportIntervalKey as CFString) as? Int
         
