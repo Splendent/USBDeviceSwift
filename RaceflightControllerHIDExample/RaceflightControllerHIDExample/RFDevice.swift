@@ -29,12 +29,12 @@ class RFDevice: NSObject {
         bytesArray.insert(reportId, at: 0)
         bytesArray.append(0)// hack every report should end with 0 byte
         
-        if (bytesArray.count > self.deviceInfo.reportSize) {
+        if (bytesArray.count > self.deviceInfo.maxOutputReportSize) {
             print("Output data too large for USB report")
             return
         }
         
-        let correctData = Data(bytes: UnsafePointer<UInt8>(bytesArray), count: self.deviceInfo.reportSize)
+        let correctData = Data(bytes: UnsafePointer<UInt8>(bytesArray), count: self.deviceInfo.maxOutputReportSize)
         
         IOHIDDeviceSetReport(
             self.deviceInfo.device,

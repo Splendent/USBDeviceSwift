@@ -16,13 +16,13 @@ public protocol HIDDeviceMonitorDelegate {
 
 open class HIDDeviceMonitor {
     public let vp:[HIDMonitorData]
-    public let reportSize:Int
+    public let fallbackInputReportSize:Int //fallback reportSize if HIDDevice kIOHIDMaxInputReportSizeKey is unavailable
     
     public var delegate: HIDDeviceMonitorDelegate? = nil
     
     public init(_ vp:[HIDMonitorData], reportSize:Int) {
         self.vp = vp
-        self.reportSize = reportSize
+        self.fallbackInputReportSize = reportSize
     }
     
     @objc open func start() {
@@ -61,12 +61,14 @@ open class HIDDeviceMonitor {
     open func read(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, type: IOHIDReportType, reportId: UInt32, report: UnsafeMutablePointer<UInt8>, reportLength: CFIndex, device: IOHIDDevice) {
         let data = Data(bytes: UnsafePointer<UInt8>(report), count: reportLength)
         self.delegate?.deviceDataReceived(data: data, dataPointer: report, device: device)
-        NotificationCenter.default.post(name: .HIDDeviceDataReceived, object: ["data": data, "dataPtr" : report, "ioHIDDevice": device])
+        NotificationCenter.default.post(name: .HIDDeviceDataReceived, object: ["data": data, "dataPtr" : report, "ioHIDDevice": device] as [String : Any])
     }
     
     open func rawDeviceAdded(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, inIOHIDDeviceRef: IOHIDDevice!) {
         // It would be better to look up the report size and create a chunk of memory of that size
-        let report = UnsafeMutablePointer<UInt8>.allocate(capacity: reportSize)
+        let device = HIDDevice(device:inIOHIDDeviceRef)
+        let inputReportSize = device.maxInputReportSize > 0 ? device.maxInputReportSize : fallbackInputReportSize
+        let report = UnsafeMutablePointer<UInt8>.allocate(capacity: inputReportSize)
         let inputCallback : IOHIDReportWithTimeStampCallback = { inContext, inResult, inSender, type, reportId, report, reportLength, timeStamp in
             /** @typedef IOHIDReportCallback
                 @discussion Type and arguments of callout C function that is used when a HID report completion routine is called.
@@ -85,9 +87,8 @@ open class HIDDeviceMonitor {
         }
         
         //Hook up inputcallback
-        IOHIDDeviceRegisterInputReportWithTimeStampCallback(inIOHIDDeviceRef!, report, reportSize, inputCallback, unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
+        IOHIDDeviceRegisterInputReportWithTimeStampCallback(inIOHIDDeviceRef!, report, inputReportSize, inputCallback, unsafeBitCast(self, to: UnsafeMutableRawPointer.self))
         
-        let device = HIDDevice(device:inIOHIDDeviceRef)
         NotificationCenter.default.post(name: .HIDDeviceConnected, object: ["device": device])
     }
     
@@ -96,6 +97,6 @@ open class HIDDeviceMonitor {
         NotificationCenter.default.post(name: .HIDDeviceDisconnected, object: [
             "id": device.id,
             "device": device
-        ])
+        ] as [String : Any])
     }
 }

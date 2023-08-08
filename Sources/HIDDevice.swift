@@ -66,7 +66,8 @@ public struct HIDDevice {
     public let id:Int
     public let vendorId:Int
     public let productId:Int
-    public let reportSize:Int
+    public let maxInputReportSize:Int
+    public let maxOutputReportSize:Int
     public let device:IOHIDDevice
     public let name:String
     public let interfaceId:Int
@@ -82,7 +83,8 @@ public struct HIDDevice {
         self.name = IOHIDDeviceGetProperty(self.device, kIOHIDProductKey as CFString) as? String ?? ""
         self.vendorId = IOHIDDeviceGetProperty(self.device, kIOHIDVendorIDKey as CFString) as? Int ?? -1
         self.productId = IOHIDDeviceGetProperty(self.device, kIOHIDProductIDKey as CFString) as? Int ?? -1
-        self.reportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? -1
+        self.maxInputReportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxInputReportSizeKey as CFString) as? Int ?? -1
+        self.maxOutputReportSize = IOHIDDeviceGetProperty(self.device, kIOHIDMaxOutputReportSizeKey as CFString) as? Int ?? -1
         self.versionValue = IOHIDDeviceGetProperty(self.device, kIOHIDVersionNumberKey as CFString) as? Int //bcdDevice, actually
         self.version = HIDBCDVersion(bcdVersionString: String(format: "%x", self.versionValue ?? 0))
         self.serialNumber = IOHIDDeviceGetProperty(self.device, kIOHIDSerialNumberKey as CFString) as? String
