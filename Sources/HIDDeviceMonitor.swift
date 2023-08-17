@@ -20,6 +20,8 @@ open class HIDDeviceMonitor {
     
     public var delegate: HIDDeviceMonitorDelegate? = nil
     
+    private var deviceReportBuffers = [IOHIDDevice:UnsafeMutablePointer<UInt8>]()
+    
     public init(_ vp:[HIDMonitorData], reportSize:Int) {
         self.vp = vp
         self.fallbackInputReportSize = reportSize
@@ -69,6 +71,7 @@ open class HIDDeviceMonitor {
         let device = HIDDevice(device:inIOHIDDeviceRef)
         let inputReportSize = device.maxInputReportSize > 0 ? device.maxInputReportSize : fallbackInputReportSize
         let report = UnsafeMutablePointer<UInt8>.allocate(capacity: inputReportSize)
+        deviceReportBuffers[inIOHIDDeviceRef] = report
         let inputCallback : IOHIDReportWithTimeStampCallback = { inContext, inResult, inSender, type, reportId, report, reportLength, timeStamp in
             /** @typedef IOHIDReportCallback
                 @discussion Type and arguments of callout C function that is used when a HID report completion routine is called.
@@ -94,6 +97,8 @@ open class HIDDeviceMonitor {
     
     open func rawDeviceRemoved(_ inResult: IOReturn, inSender: UnsafeMutableRawPointer, inIOHIDDeviceRef: IOHIDDevice!) {
         let device = HIDDevice(device:inIOHIDDeviceRef)
+        deviceReportBuffers[inIOHIDDeviceRef]?.deallocate()
+        deviceReportBuffers[inIOHIDDeviceRef] = nil
         NotificationCenter.default.post(name: .HIDDeviceDisconnected, object: [
             "id": device.id,
             "device": device
