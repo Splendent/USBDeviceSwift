@@ -1,8 +1,8 @@
 # A modified version of USBDeviceSwift
 - using delegate to pass read data
-  -- notifcation just too slow and might having some issue if read too fast
+  - notifcation just too slow and might having some issue if reading too fast
 - more hid device information
-  -- also fix some trivial bugs
+  - also fix some trivial bugs
 
 # USBDeviceSwift
 
