@@ -1,3 +1,9 @@
+# A modified version of USBDeviceSwift
+- using delegate to pass read data
+  -- notifcation just too slow and might having some issue if read too fast
+- more hid device information
+  -- also fix some trivial bugs
+
 # USBDeviceSwift
 
 **USBDeviceSwift** - is a wrapper for `IOKit.usb` and `IOKit.hid` and `IOKit.serial` written on pure Swift that allows you convenient work with USB devices.
